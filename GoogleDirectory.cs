@@ -274,7 +274,7 @@ namespace GoogleApiTesting
             Users search1 = searchRequest1.Execute();
             Console.WriteLine("Users that include 'Isabelle' in name and email: " + JsonSerializer.Serialize(search1));
 
-            //Get all super administrators
+            // //Get all super administrators
             UsersResource.ListRequest searchRequest2 = new UsersResource.ListRequest(service) { Customer = "my_customer", Query = "isAdmin=true" }; //user is superadmin
             Users search2 = searchRequest2.Execute();
             Console.WriteLine("Super administrators: " + JsonSerializer.Serialize(search2));
@@ -284,7 +284,7 @@ namespace GoogleApiTesting
             Users search3 = searchRequest3.Execute();
             Console.WriteLine("All users in Dhahran High School: " + JsonSerializer.Serialize(search3));
 
-            //Get all users in organiation
+            // //Get all users in organiation
             UsersResource.ListRequest searchRequest4 = new UsersResource.ListRequest(service) { Customer = "my_customer", Query = "orgUnitPath='/'" }; //all users in organization
             Users search4 = searchRequest4.Execute();
             Console.WriteLine("All users in organization: " + JsonSerializer.Serialize(search4));
@@ -305,29 +305,81 @@ namespace GoogleApiTesting
                 Console.WriteLine(g.Name);
             }
 
+            //Get all schemas
+            Schemas schemas = service.Schemas.List("my_customer").Execute();
+            Console.WriteLine("All schemas: " + JsonSerializer.Serialize(schemas));
 
-            //Add custom fields to user (don't have full permission)
+            //Add custom schema 
             SchemaFieldSpec field1 = new SchemaFieldSpec() { DisplayName = "location", FieldName = "location", FieldType = "STRING" };
             IList<SchemaFieldSpec> fields = new List<SchemaFieldSpec>();
             fields.Add(field1);
             Schema info = new Schema() { DisplayName = "Information", SchemaName = "Information", Fields = fields };
             SchemasResource.InsertRequest addSchemaRequest = new SchemasResource.InsertRequest(service, info, "my_customer");
             var addedSchema = addSchemaRequest.Execute();
-            Console.WriteLine("Added schema to Isabelle: " + JsonSerializer.Serialize(addedSchema));
+            Console.WriteLine("Added schema: " + JsonSerializer.Serialize(addedSchema));
 
-            //Get all schemas (don't have full permission)
-            Schemas schemas = service.Schemas.List("my_customer").Execute();
-            Console.WriteLine("All schemas: " + JsonSerializer.Serialize(schemas));
+
+            //Creating and updating users
+
+
+            //Create new user
+            List<UserEmail> userEmails = new List<UserEmail>() { new UserEmail() { Address = "newUser@oneuseredu.com", Primary = true } };
+            UserGender userGender = new UserGender() { Type = "female" };
+            UserKeyword userKeyword = new UserKeyword() { Type = "occupation", Value = "teacher" };
+            UserLanguage userLanguage = new UserLanguage() { LanguageCode = "en" };
+            UserLocation userLocation = new UserLocation() { Area = "Mountain View, CA", BuildingId = "23", DeskCode = "5" };
+            UserName userName = new UserName() { GivenName = "Jane", FamilyName = "Doe" };
+            User newUser = new User()
+            {
+                Emails = userEmails,
+                Gender = userGender,
+                Keywords = new List<UserKeyword>() { userKeyword },
+                Languages = new List<UserLanguage>() { userLanguage },
+                Locations = new List<UserLocation>() { userLocation },
+                Name = userName,
+                OrgUnitPath = "/Dhahran High School/2022",
+                Password = "SamplePassword123",
+                PrimaryEmail = "newUser@oneuseredu.com",
+            };
+            UsersResource.InsertRequest newUserRequest = new UsersResource.InsertRequest(service, newUser);
+            var addedUser = newUserRequest.Execute();
+            Console.WriteLine("Added user: " + JsonSerializer.Serialize(addedUser));
+
+            //Move OU of user
+            User toUpdate = service.Users.Get("newuser@oneuseredu.com").Execute();
+            toUpdate.OrgUnitPath = "/Washington HS/2022";
+            UsersResource.UpdateRequest moveUserRequest = new UsersResource.UpdateRequest(service, toUpdate, "newuser@oneuseredu.com");
+            var movedUser = moveUserRequest.Execute();
+            Console.WriteLine("Moved Jane Doe to Washington HS: " + JsonSerializer.Serialize(movedUser));
+
+            //Add as member of group
+            Group toUpdate2 = service.Groups.Get("apcsa@oneuseredu.com").Execute();
+            User toAdd = service.Users.Get("newuser@oneuseredu.com").Execute();
+            Member newMember = new Member() { Email = toAdd.Emails[0].Address, Role = "MEMBER" };
+            MembersResource.InsertRequest addMember = service.Members.Insert(newMember, toUpdate2.Id);
+            var addedMember = addMember.Execute();
+            Console.WriteLine("Added member to group: " + JsonSerializer.Serialize(addedMember));
+
+            //Move member to different group
+            Member toMove = service.Members.Get("apcsa@oneuseredu.com", "newuser@oneuseredu.com").Execute();
+            var added = service.Members.Insert(toMove, "tech@oneuseredu.com").Execute(); //do this first
+            Console.WriteLine("Added member to new group: " + JsonSerializer.Serialize(added));
+            var removed = service.Members.Delete("apcsa@oneuseredu.com", "newuser@oneuseredu.com").Execute();
+            Console.WriteLine("Removed member from old group: " + JsonSerializer.Serialize(removed));
         }
     }
     class Testing
     {
-        // static void Main(String[] args)
-        // {
-        //     // OUTesting.testOUs(); //calls test methods for OUs
-        //     // GroupTesting.testGroups(); //calls test methods for groups;
-        //     // userTesting.testUsers();
-        // }
+        static void Main(String[] args)
+        {
+            //Directory API
+            // OUTesting.testOUs(); //calls test methods for OUs
+            // GroupTesting.testGroups(); //calls test methods for groups;
+            // userTesting.testUsers(); //calls test methods for users
+
+            //Drive API
+            // GoogleDriveTesting.driveTesting.testDrive(); //tests google drive methods
+        }
     }
 
 }

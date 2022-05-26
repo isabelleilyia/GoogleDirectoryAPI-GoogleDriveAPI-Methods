@@ -50,10 +50,10 @@ namespace GoogleDriveTesting
 
         }
     }
-    class driveTesting
+    public class driveTesting
     {
 
-        static void Main(String[] args)
+        public static void testDrive()
         {
             var service = Authentication.authenticate();
 
