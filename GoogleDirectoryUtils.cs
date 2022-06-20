@@ -171,12 +171,11 @@ namespace GoogleDirectoryUtils
         //Required fields: userKey
         public Groups GetGroupsOfMember(GroupInfo groupInfo)
         {
-            GroupsResource.ListRequest groupRequest = new GroupsResource.ListRequest(service) { UserKey = groupInfo.userKey };
-            return groupRequest.Execute();
+            return SearchForGroups(groupInfo);
         }
 
         // Returns groups values sorted by Email
-        // Optional Fields: maxResults, sortOrder, query, pageToken
+        // Optional Fields: maxResults, sortOrder, query, pageToken, userKey
         public Groups SearchForGroups(GroupInfo groupInfo)
         {
 
@@ -188,6 +187,10 @@ namespace GoogleDirectoryUtils
             if (groupInfo.pageToken != null)
             {
                 sortedGroupsRequest.PageToken = groupInfo.pageToken;
+            }
+            if (groupInfo.userKey != null)
+            {
+                sortedGroupsRequest.UserKey = groupInfo.userKey;
             }
             return sortedGroupsRequest.Execute();
 
@@ -226,85 +229,146 @@ namespace GoogleDirectoryUtils
 
     }
 
+    class UserUtils
+    {
+        DirectoryService service;
+
+        public UserUtils()
+        {
+            service = (new Authentication(new string[] { DirectoryService.Scope.AdminDirectoryUser })).service;
+        }
+
+
+        //Optional fields: projection, maxResults, sortOrder, orderBy, viewType, eventIntended, showDeleted, query, customFieldMask, pageToken
+        public Users SearchForUsers(UserInfo userInfo)
+        {
+            UsersResource.ListRequest getUsersRequest = new UsersResource.ListRequest(service)
+            {
+                Customer = "my_customer",
+                Projection = userInfo.projection,
+                MaxResults = userInfo.maxResults,
+                SortOrder = userInfo.sortOrder,
+                OrderBy = userInfo.orderBy,
+                ViewType = userInfo.viewType,
+                Event = userInfo.eventIntended,
+                ShowDeleted = userInfo.showDeleted,
+
+            };
+            if (userInfo.query != null)
+            {
+                getUsersRequest.Query = userInfo.query;
+            }
+            if (userInfo.customFieldMask != null)
+            {
+                getUsersRequest.CustomFieldMask = userInfo.customFieldMask;
+            }
+            if (userInfo.pageToken != null)
+            {
+                getUsersRequest.PageToken = userInfo.pageToken;
+            }
+            return getUsersRequest.Execute();
+
+        }
+
+        //Required fields: userKey
+        public User GetUser(UserInfo userInfo)
+        {
+            return service.Users.Get(userInfo.userKey).Execute();
+
+        }
+
+        //Required fields: userKey, fieldToEdit, newFieldVal
+        public User UpdateUser(UserInfo userInfo)
+        {
+            User toUpdate = service.Users.Get(userInfo.userKey).Execute();
+            System.Reflection.PropertyInfo propertyInfo = toUpdate.GetType().GetProperty(userInfo.fieldToEdit);
+            propertyInfo.SetValue(toUpdate, userInfo.newFieldVal);
+            return service.Users.Update(toUpdate, userInfo.userKey).Execute();
+        }
+
+
+
+    }
+
     class Testing
     {
 
-        static void Main(String[] args)
-        {
-            //Example usage 
+        // static void Main(String[] args)
+        // {
+        //Example usage 
 
-            // //ORGUNITUTILS
-            // OrgUnitUtils utils = new OrgUnitUtils();
+        // //ORGUNITUTILS
+        // OrgUnitUtils utils = new OrgUnitUtils();
 
-            // //AddOrgUnit
-            // OUInfo ouInfo = new OUInfo() { orgName = "2020", parentOrgUnitPath = "/Dhahran High School", description = "Juniors" };
-            // OrgUnit newOrg = utils.AddOrgUnit(ouInfo);
+        // //AddOrgUnit
+        // OUInfo ouInfo = new OUInfo() { orgName = "2020", parentOrgUnitPath = "/Dhahran High School", description = "Juniors" };
+        // OrgUnit newOrg = utils.AddOrgUnit(ouInfo);
 
-            // //EditOrgUnit
-            // ouInfo = new OUInfo() { orgUnitPath = "Dhahran High School/2020", fieldToEdit = "Description", newFieldVal = "Graduated" };
-            // OrgUnit editedOrg = utils.EditOrgUnit(ouInfo);
+        // //EditOrgUnit
+        // ouInfo = new OUInfo() { orgUnitPath = "Dhahran High School/2020", fieldToEdit = "Description", newFieldVal = "Graduated" };
+        // OrgUnit editedOrg = utils.EditOrgUnit(ouInfo);
 
-            // //DeleteOrgUnit
-            // ouInfo = new OUInfo() { orgUnitPath = "Dhahran High School/2020" };
-            // string result = utils.DeleteOrgUnit(ouInfo);
+        // //DeleteOrgUnit
+        // ouInfo = new OUInfo() { orgUnitPath = "Dhahran High School/2020" };
+        // string result = utils.DeleteOrgUnit(ouInfo);
 
-            // //ListOrgUnits, orgUnits list accessible under list.OrganizationUnits
-            // ouInfo = new OUInfo() { orgUnitPath = "", queryType = OrgunitsResource.ListRequest.TypeEnum.Children };
-            // OrgUnits list = utils.ListOrgUnits(ouInfo);
+        // //ListOrgUnits, orgUnits list accessible under list.OrganizationUnits
+        // ouInfo = new OUInfo() { orgUnitPath = "", queryType = OrgunitsResource.ListRequest.TypeEnum.Children };
+        // OrgUnits list = utils.ListOrgUnits(ouInfo);
 
-            // //GetOrgUnit
-            // ouInfo = new OUInfo() { orgUnitPath = "Dhahran High School/2022" };
-            // OrgUnit one = utils.GetOrgUnit(ouInfo);
-
-
+        // //GetOrgUnit
+        // ouInfo = new OUInfo() { orgUnitPath = "Dhahran High School/2022" };
+        // OrgUnit one = utils.GetOrgUnit(ouInfo);
 
 
-            //GROUPUTILS
-            // GroupUtils groupUtils = new GroupUtils();
 
-            //Add Group
-            // GroupInfo groupInfo = new GroupInfo() { name = "Calculus", email = "calc@oneuseredu.com", description = "Calc sections" };
-            // Group newGroup = groupUtils.AddGroup(groupInfo);
 
-            //Edit Group
-            // groupInfo = new GroupInfo() { groupId = "calc@oneuseredu.com", fieldToEdit = "Description", newFieldVal = "Morning sections" };
-            // Group editedGroup = groupUtils.EditGroup(groupInfo);
+        //GROUPUTILS
+        // GroupUtils groupUtils = new GroupUtils();
 
-            //Add member to group
-            // groupInfo = new GroupInfo() { groupId = "calc@oneuseredu.com", newMemberEmail = "isabelle@oneuseredu.com", memberRole = "Owner" };
-            // Member newMember = groupUtils.AddMemberToGroup(groupInfo);
+        //Add Group
+        // GroupInfo groupInfo = new GroupInfo() { name = "Calculus", email = "calc@oneuseredu.com", description = "Calc sections" };
+        // Group newGroup = groupUtils.AddGroup(groupInfo);
 
-            //Delete group
-            // groupInfo = new GroupInfo() { groupId = "calc@oneuseredu.com" };
-            // string deleteGroupResult = groupUtils.DeleteGroup(groupInfo);
+        //Edit Group
+        // groupInfo = new GroupInfo() { groupId = "calc@oneuseredu.com", fieldToEdit = "Description", newFieldVal = "Morning sections" };
+        // Group editedGroup = groupUtils.EditGroup(groupInfo);
 
-            //Add alias to group
-            // groupInfo = new GroupInfo() { email = "calc@oneuseredu.com", aliasValue = "aliastest@oneuseredu.com" };
-            // Alias addedAlias = groupUtils.AddAliasToGroup(groupInfo);
+        //Add member to group
+        // groupInfo = new GroupInfo() { groupId = "calc@oneuseredu.com", newMemberEmail = "isabelle@oneuseredu.com", memberRole = "Owner" };
+        // Member newMember = groupUtils.AddMemberToGroup(groupInfo);
 
-            //Get aliases of group
-            // groupInfo = new GroupInfo() { groupId = "calc@oneuseredu.com" };
-            // Aliases groupAliases = groupUtils.GetAliasesOfGroup(groupInfo);
+        //Delete group
+        // groupInfo = new GroupInfo() { groupId = "calc@oneuseredu.com" };
+        // string deleteGroupResult = groupUtils.DeleteGroup(groupInfo);
 
-            //Delete alias of group
-            // groupInfo = new GroupInfo() { groupId = "calc@oneuseredu.com", aliasValue = "aliastest@oneuseredu.com" };
-            // string deleteAliasResult = groupUtils.DeleteAliasOfGroup(groupInfo);
+        //Add alias to group
+        // groupInfo = new GroupInfo() { email = "calc@oneuseredu.com", aliasValue = "aliastest@oneuseredu.com" };
+        // Alias addedAlias = groupUtils.AddAliasToGroup(groupInfo);
 
-            //Get groups of one member
-            // groupInfo = new GroupInfo() { userKey = "isabelle@oneuseredu.com" };
-            // Groups isabelleGroups = groupUtils.GetGroupsOfMember(groupInfo);
+        //Get aliases of group
+        // groupInfo = new GroupInfo() { groupId = "calc@oneuseredu.com" };
+        // Aliases groupAliases = groupUtils.GetAliasesOfGroup(groupInfo);
 
-            //Search for groups
-            // groupInfo = new GroupInfo() { maxResults = 1, sortOrder = GroupsResource.ListRequest.SortOrderEnum.DESCENDING, query = "memberKey=isabelle@oneuseredu.com" };
-            // Groups searchedGroups = groupUtils.SearchForGroups(groupInfo);
-            // //Get second set of results
-            // groupInfo.pageToken = searchedGroups.NextPageToken;
-            // Groups searchedGroups2 = groupUtils.SearchForGroups(groupInfo);
+        //Delete alias of group
+        // groupInfo = new GroupInfo() { groupId = "calc@oneuseredu.com", aliasValue = "aliastest@oneuseredu.com" };
+        // string deleteAliasResult = groupUtils.DeleteAliasOfGroup(groupInfo);
 
-            //Get members of group
-            // groupInfo = new GroupInfo() { groupId = "apcsa@oneuseredu.com", memberRole = "Member", indirectMembersIncluded = true, maxResults = 2 };
-            // Members groupMembers = groupUtils.GetMembersOfGroup(groupInfo);
+        //Get groups of one member
+        // groupInfo = new GroupInfo() { userKey = "isabelle@oneuseredu.com" };
+        // Groups isabelleGroups = groupUtils.GetGroupsOfMember(groupInfo);
 
-        }
+        //Search for groups
+        // groupInfo = new GroupInfo() { maxResults = 1, sortOrder = GroupsResource.ListRequest.SortOrderEnum.DESCENDING, query = "memberKey=isabelle@oneuseredu.com" };
+        // Groups searchedGroups = groupUtils.SearchForGroups(groupInfo);
+        // //Get second set of results
+        // groupInfo.pageToken = searchedGroups.NextPageToken;
+        // Groups searchedGroups2 = groupUtils.SearchForGroups(groupInfo);
+
+        //Get members of group
+        // groupInfo = new GroupInfo() { groupId = "apcsa@oneuseredu.com", memberRole = "Member", indirectMembersIncluded = true, maxResults = 2 };
+        // Members groupMembers = groupUtils.GetMembersOfGroup(groupInfo);
+
+        // }
     }
 }

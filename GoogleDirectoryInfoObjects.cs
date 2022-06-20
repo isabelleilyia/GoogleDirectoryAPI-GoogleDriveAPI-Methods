@@ -1,4 +1,6 @@
 using Google.Apis.Admin.Directory.directory_v1;
+using Google.Apis.Admin.Directory.directory_v1.Data;
+
 using System;
 using System.Linq;
 
@@ -59,6 +61,8 @@ namespace GoogleDirectoryInfoObjects
             parentOrgUnitPath = "/";
 
         }
+
+
     }
 
     class GroupInfo
@@ -138,6 +142,52 @@ namespace GoogleDirectoryInfoObjects
         }
 
 
+
+    }
+
+    class UserInfo
+    {
+
+        // Search information: info on each field https://googleapis.dev/dotnet/Google.Apis.Admin.Directory.directory_v1/latest/api/Google.Apis.Admin.Directory.directory_v1.UsersResource.ListRequest.html 
+        // info on querying for "query" field: https://developers.google.com/admin-sdk/directory/v1/guides/search-users 
+        public UsersResource.ListRequest.ViewTypeEnum viewType { get; set; }
+        public UsersResource.ListRequest.SortOrderEnum sortOrder { get; set; }
+        public string showDeleted { get; set; }
+        public UsersResource.ListRequest.ProjectionEnum projection { get; set; }
+        public string query { get; set; }
+        public UsersResource.ListRequest.OrderByEnum orderBy { get; set; }
+        public int maxResults { get; set; }
+        public UsersResource.ListRequest.EventEnum eventIntended { get; set; }
+        public string customFieldMask { get; set; }
+        public string pageToken { get; set; }
+        private string fieldToEditValue; //backing variable
+        public string fieldToEdit
+        {
+            get { return fieldToEditValue; }
+            set
+            {
+
+                // string[] validFields = { "Name", "Email",  };
+                User user = new User();
+                if (user.GetType().GetProperty(value) != null)
+                {
+                    fieldToEditValue = value;
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid field name for User");
+                }
+            }
+        }
+        public string newFieldVal { get; set; }
+
+        //User information
+        public string userKey { get; set; }
+        public UserInfo()
+        {
+            maxResults = System.Int32.MaxValue;
+            showDeleted = "false";
+        }
 
     }
 }
