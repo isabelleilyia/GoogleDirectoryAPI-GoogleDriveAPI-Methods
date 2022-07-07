@@ -1,4 +1,4 @@
-# CPSIGoogleAPI
+# Google Directory API and Google Drive API Access Methods
 
 This repository provides utility methods and sample usage for the Google Directory API and for the Google Drive API. Proper credentials are needed (and must be saved to a file called 'credentials.json' in the same directory as the class accessing them). Credentials are generated through the project's Google Cloud Console project page.
 
